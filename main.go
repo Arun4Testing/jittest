@@ -1,3 +1,10 @@
+/*
+|--------------------------------------------------------------------------
+| FILE : main.go
+| DESC : Jitsi JWT Token Server (Go + CORS Enabled)
+|--------------------------------------------------------------------------
+*/
+
 package main
 
 import (
@@ -17,30 +24,52 @@ var (
 	keyID      = "vpaas-magic-cookie-aaf741963ad940d98be3754471b953ef/fb4dde"
 	privateKey *rsa.PrivateKey
 
+	/// 🔹 Track first user as moderator
 	roomState = make(map[string]bool)
 	mu        sync.Mutex
 )
 
 func main() {
 
+	/// 🔹 Load private key
 	keyData, err := os.ReadFile("private.pem")
 	if err != nil {
-		log.Fatal("Cannot read private.pem")
+		log.Fatal("❌ Cannot read private.pem")
 	}
 
 	privateKey, err = jwt.ParseRSAPrivateKeyFromPEM(keyData)
 	if err != nil {
-		log.Fatal("Invalid private key")
+		log.Fatal("❌ Invalid private key")
 	}
 
+	/// 🔹 Routes
 	http.HandleFunc("/token", generateToken)
 
 	fmt.Println("🚀 Server running at http://localhost:8080")
+
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
+/*
+|--------------------------------------------------------------------------
+| FUNCTION : generateToken
+| PURPOSE  : Generate JWT for Jitsi (8x8)
+|--------------------------------------------------------------------------
+*/
 func generateToken(w http.ResponseWriter, r *http.Request) {
 
+	/// 🔥 CORS HEADERS (VERY IMPORTANT FOR WEB)
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+	/// 🔥 Handle preflight request
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	/// 🔹 Get query params
 	room := r.URL.Query().Get("room")
 	name := r.URL.Query().Get("name")
 
@@ -53,6 +82,7 @@ func generateToken(w http.ResponseWriter, r *http.Request) {
 		name = "Guest"
 	}
 
+	/// 🔹 Assign moderator to first user
 	mu.Lock()
 	isModerator := false
 
@@ -63,6 +93,7 @@ func generateToken(w http.ResponseWriter, r *http.Request) {
 
 	mu.Unlock()
 
+	/// 🔹 JWT Claims
 	claims := jwt.MapClaims{
 		"aud": "jitsi",
 		"iss": "chat",
@@ -77,14 +108,17 @@ func generateToken(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
+	/// 🔹 Create token
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 	token.Header["kid"] = keyID
 
+	/// 🔹 Sign token
 	signedToken, err := token.SignedString(privateKey)
 	if err != nil {
 		http.Error(w, "Token signing failed", http.StatusInternalServerError)
 		return
 	}
 
+	/// 🔹 Return JWT
 	w.Write([]byte(signedToken))
 }
