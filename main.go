@@ -20,8 +20,8 @@ import (
 )
 
 var (
-	appID      = "vpaas-magic-cookie-aaf741963ad940d98be3754471b953ef"
-	keyID      = "vpaas-magic-cookie-aaf741963ad940d98be3754471b953ef/fb4dde"
+	appID      = "vpaas-magic-cookie-7ea3721753304576889be7549ed9c605"
+	keyID      = "vpaas-magic-cookie-7ea3721753304576889be7549ed9c605/12d7aa"
 	privateKey *rsa.PrivateKey
 
 	/// 🔹 Track first user as moderator
