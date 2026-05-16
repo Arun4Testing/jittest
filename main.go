@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	appID      = "vpaas-magic-cookie-1d55d94c1fc14af980205ba192d559ed"
+	appID      = "vpaas-magic-cookie-846ff7f08a064f8395479cbc91c7fe71"
 	keyID      = "vpaas-magic-cookie-846ff7f08a064f8395479cbc91c7fe71/5a6493"
 	privateKey *rsa.PrivateKey
 
